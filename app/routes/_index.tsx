@@ -1,41 +1,65 @@
-import type { MetaFunction } from "@vercel/remix";
+import { useNavigate } from '@remix-run/react'
+import type { MetaFunction } from '@vercel/remix'
+import { useState } from 'react'
+import { parseEventsFromLogs } from '~/parser'
 
 export const meta: MetaFunction = () => {
-  return [
-    { title: "New Remix App" },
-    { name: "description", content: "Welcome to Remix!" },
-  ];
-};
+  return [{ title: 'Tempo' }, { name: 'description', content: 'Write me' }]
+}
 
 export default function Index() {
+  const navigate = useNavigate()
+
+  const [logs, setLogs] = useState(defaultLogs)
+  const [isParsing, setIsParsing] = useState(false)
+
+  const parseLogs = () => {
+    setIsParsing(true)
+
+    const lines = logs.trim().split('\n')
+
+    parseEventsFromLogs(lines)
+      .then((result) => {
+        console.log(result)
+        const serializedEvents = btoa(JSON.stringify(result.events))
+
+        navigate(`/events/${serializedEvents}`)
+      })
+      .finally(() => {
+        setIsParsing(false)
+      })
+  }
+
   return (
-    <div style={{ fontFamily: "system-ui, sans-serif", lineHeight: "1.8" }}>
-      <h1>Welcome to Remix</h1>
-      <ul>
-        <li>
-          <a
-            target="_blank"
-            href="https://remix.run/tutorials/blog"
-            rel="noreferrer"
-          >
-            15m Quickstart Blog Tutorial
-          </a>
-        </li>
-        <li>
-          <a
-            target="_blank"
-            href="https://remix.run/tutorials/jokes"
-            rel="noreferrer"
-          >
-            Deep Dive Jokes App Tutorial
-          </a>
-        </li>
-        <li>
-          <a target="_blank" href="https://remix.run/docs" rel="noreferrer">
-            Remix Docs
-          </a>
-        </li>
-      </ul>
+    <div className="w-full">
+      <h1>Tempo</h1>
+      <p>Write me</p>
+
+      <div className="w-full">
+        <textarea
+          className="w-full max-w-sm"
+          disabled={isParsing}
+          value={logs}
+          onChange={(e) => setLogs(e.target.value)}
+        />
+        <button
+          disabled={isParsing}
+          onClick={parseLogs}
+        >
+          Parse logs
+        </button>
+      </div>
     </div>
-  );
+  )
 }
+
+const defaultLogs = `tempo;2024-07-04T13:00:00.000Z;load-data;start
+tempo;2024-07-04T13:00:00.000Z;load-user;start
+tempo;2024-07-04T13:00:00.000Z;load-team;start
+tempo;2024-07-04T13:00:02.000Z;load-project;start
+tempo;2024-07-04T13:00:02.000Z;load-user;end
+tempo;2024-07-04T13:00:04.000Z;load-team;end
+tempo;2024-07-04T13:00:03.000Z;load-project;end
+tempo;2024-07-04T13:00:04.000Z;load-data;end
+tempo;2024-07-04T13:00:04.000Z;render;start
+tempo;2024-07-04T13:00:06.000Z;render;end`
